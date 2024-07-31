@@ -1,2 +1,2 @@
-#- include_tasks: win_con.yml
+- include_tasks: awx.yml
 

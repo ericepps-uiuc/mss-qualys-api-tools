@@ -5,7 +5,7 @@
     organization: "{{ awxorg }}"
     project: "WSAA {{ awx_project_name }}"
     description: "{{ awxdesc }}"
-    name: "WSAA {{ awx_template_name_reports }}"
+    name: "WSAA {{ awx_template_name_assetgrp }}"
     job_type: run
     inventory: WSAA Inventory Ad Hoc
     playbook: qualys_asset_groups.yml
@@ -21,7 +21,7 @@
     organization: "{{ awxorg }}"
     project: "WSAA {{ awx_project_name }}"
     description: "{{ awxdesc }}"
-    name: "WSAA {{ awx_template_name_assetgrp }}"
+    name: "WSAA {{ awx_template_name_reports }}"
     job_type: run
     inventory: WSAA Inventory Ad Hoc
     playbook: qualys_reports.yml
@@ -32,19 +32,20 @@
 
 - name: Create schedule for every Saturday morning
   awx.awx.schedule:
+    controller_host: "{{ awxhost }}"
+    controller_oauthtoken: "{{ awxtoken }}"
+    organization: "{{ awxorg }}"
     name: "WSAA {{ awx_template_name_assetgrp }}"
     state: present
     unified_job_template: "WSAA {{ awx_template_name_assetgrp }}"
-    rrule: "{{ query(awx.awx.schedule_rruleset, '2024-07-31 06:30:45', rules=rrules, timezone='UTC' ) }}"
-  vars:
-    rrules:
-      - frequency: 'day'
-        every: 1
-        on_days: 'saturday'
+    rrule: "DTSTART;TZID=America/Chicago:20240801T060500Z RRULE:FREQ=WEEKLY;INTERVAL=1;BYDAY=SA"
 
 - name: Create schedule for first of every month
   awx.awx.schedule:
+    controller_host: "{{ awxhost }}"
+    controller_oauthtoken: "{{ awxtoken }}"
+    organization: "{{ awxorg }}"
     name: "WSAA {{ awx_template_name_reports }}"
     state: present
     unified_job_template: "WSAA {{ awx_template_name_reports }}"
-    rrule: "DTSTART:20240801T130551Z RRULE:FREQ=MONTHLY;INTERVAL=1;COUNT=1"
+    rrule: "DTSTART;TZID=America/Chicago:20240801T060500Z RRULE:FREQ=MONTHLY;INTERVAL=1"
