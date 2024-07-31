@@ -38,7 +38,7 @@
     name: "WSAA {{ awx_template_name_assetgrp }}"
     state: present
     unified_job_template: "WSAA {{ awx_template_name_assetgrp }}"
-    rrule: "DTSTART;TZID=America/Chicago:20240801T060500Z RRULE:FREQ=WEEKLY;INTERVAL=1;BYDAY=SA"
+    rrule: "DTSTART:20240801T0110500Z RRULE:FREQ=WEEKLY;INTERVAL=1;BYDAY=SA"
 
 - name: Create schedule for first of every month
   awx.awx.schedule:
@@ -48,4 +48,4 @@
     name: "WSAA {{ awx_template_name_reports }}"
     state: present
     unified_job_template: "WSAA {{ awx_template_name_reports }}"
-    rrule: "DTSTART;TZID=America/Chicago:20240801T060500Z RRULE:FREQ=MONTHLY;INTERVAL=1"
+    rrule: "DTSTART:20240801T0110500Z RRULE:FREQ=MONTHLY;INTERVAL=1"
