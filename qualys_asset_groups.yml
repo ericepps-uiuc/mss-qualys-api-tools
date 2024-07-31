@@ -1,12 +1,5 @@
 - hosts: localhost
   tasks:
-  - name: Install requests python package
-    ansible.builtin.pip:
-      name: requests
-  - name: Install jmespath python package
-    ansible.builtin.pip:
-      name: jmespath
-    
   - name: Execute Python Script using the script module
     ansible.builtin.script:
       cmd: qualys_asset_groups.py 
