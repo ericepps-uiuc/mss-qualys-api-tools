@@ -1,0 +1,25 @@
+#vault_path: 'wsaa/awx/awx-dev/base'
+vault_path: 'wsaa/ansible/awx/setup'
+
+setup_awx: true
+
+#vars for awx project
+awx_project_name: 'mss-qualys-api-tools'
+awx_project_url: 'git@github.com:ericepps-uiuc/mss-qualys-api-tools.git'
+awx_project_cred_type: 'Source Control'
+awx_project_branch: main
+
+#vars for awx templates
+awx_template_name_assetgrp: 'Qualys Build Asset Groups'
+awx_template_name_reports: 'Qualys Download Reports'
+
+# Example inv yml for static custom inventory
+#host_list:
+#  - name: MSS-WEB01A-D
+#    vars:
+#      ansible_host: 172.22.1.212
+#      fqdn: mss-web01a-d.wsaa.illinois.edu
+#  - name: MSS-WEB01B-D
+#    vars:
+#      ansible_host: 172.22.1.213
+#      fqdn: mss-web01b-d.wsaa.illinois.edu

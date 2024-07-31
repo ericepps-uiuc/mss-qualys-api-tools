@@ -1,0 +1,38 @@
+- name: debug project name
+  debug:
+    msg: "{{ awx_project_name }}"
+
+- name: setup vault path var
+  set_fact:
+    vault_secert_path: "wsaa/ansible/awx/projects/{{ awx_project_name }}"
+
+- name: get secret from vault
+  set_fact:
+     key: "{{ (lookup('hashi_vault', 'secret={{ vault_secert_path }}:key url={{ vault_url }}'))| string}}"
+     pw:  "{{ (lookup('hashi_vault', 'secret={{ vault_secert_path }}:pw url={{ vault_url }}'))| string}}"
+
+- name: Create credential for project
+  awx.awx.credential:
+    controller_host: "{{ awxhost }}"
+    controller_username: admin
+    controller_oauthtoken: "{{ awxtoken }}"
+    organization: "{{ awxorg }}"
+    description: "{{ awxdesc }}"
+    name: "WSAA github-{{ awx_project_name }}"
+    credential_type: "{{ awx_project_cred_type }}"
+    inputs:
+       ssh_key_data: "{{ key }}"
+       ssh_key_unlock: "{{ pw }}"
+
+- name: Create project in awx
+  awx.awx.project:
+    description: "{{ awxdesc }}"
+    controller_host: "{{ awxhost }}"
+    controller_oauthtoken: "{{ awxtoken }}"
+    organization: "{{ awxorg }}"
+    name: "WSAA {{ awx_project_name }}"
+    scm_type: git
+    scm_url: "{{ awx_project_url }}"
+    scm_branch: "{{ awx_project_branch }}"
+    credential: "WSAA github-{{ awx_project_name }}"
+

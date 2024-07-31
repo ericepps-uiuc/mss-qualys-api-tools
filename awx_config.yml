@@ -1,0 +1,36 @@
+- name: Setup bits in AWX
+  hosts: localhost
+  gather_facts: no
+  serial: 1
+  tasks:
+    - name: setup awx project
+      include_role:
+        name: awx-project
+      when: setup_awx
+
+    - name: setup awx template
+      include_role:
+        name: awx-qualys-template
+        tasks_from: awx.yml
+      when: setup_awx 
+
+#- name: Add Ad Hoc Hosts
+#  hosts: localhost
+#  connection: local
+#  gather_facts: no
+
+#  tasks:
+
+#    - name: add ad_hoc hosts to group
+#      add_host:
+#        groups: ad_hoc
+#        name: "{{ item }}"
+#      loop: "{{ (target_host| default(''))|split(',') }}"
+
+#- name: Test Connecting to WSAA Win Server
+#  hosts: ad_hoc
+#  gather_facts: yes
+#  serial: 10
+
+  roles:
+            - awx-qualys-template

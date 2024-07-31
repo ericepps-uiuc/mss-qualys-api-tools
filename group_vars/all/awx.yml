@@ -1,0 +1,10 @@
+awxorg: Techservices
+awxdesc: Ansible managed WSAA; do not edit
+#awxhost: https://smg-awx-dev.techservices.illinois.edu
+awxhost: https://smg-awx.techservices.illinois.edu
+awxtoken: "{{ (lookup('hashi_vault', 'secret={{ vault_path }}:awxtoken url={{ vault_url }}'))| string}}"
+
+awx_template_creds:
+  #- WSAA winrm
+  #- WSAA vault creds
+  - mss wsaa vault

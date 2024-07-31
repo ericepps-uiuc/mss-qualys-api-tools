@@ -1,0 +1,50 @@
+- name: Create Qualys asset group template
+  awx.awx.job_template:
+    controller_host: "{{ awxhost }}"
+    controller_oauthtoken: "{{ awxtoken }}"
+    organization: "{{ awxorg }}"
+    project: "WSAA {{ awx_project_name }}"
+    description: "{{ awxdesc }}"
+    name: "WSAA {{ awx_template_name_reports }}"
+    job_type: run
+    inventory: WSAA Inventory Ad Hoc
+    playbook: qualys_asset_groups.yml
+    ask_instance_groups_on_launch: false
+    allow_simultaneous: false
+    credentials: "{{ awx_template_creds }}"
+    survey_enabled: false
+
+- name: Create Qualys report template
+  awx.awx.job_template:
+    controller_host: "{{ awxhost }}"
+    controller_oauthtoken: "{{ awxtoken }}"
+    organization: "{{ awxorg }}"
+    project: "WSAA {{ awx_project_name }}"
+    description: "{{ awxdesc }}"
+    name: "WSAA {{ awx_template_name_assetgrp }}"
+    job_type: run
+    inventory: WSAA Inventory Ad Hoc
+    playbook: qualys_reports.yml
+    ask_instance_groups_on_launch: false
+    allow_simultaneous: false
+    credentials: "{{ awx_template_creds }}"
+    survey_enabled: false
+
+- name: Create schedule for every Saturday morning
+  awx.awx.schedule:
+    name: "WSAA {{ awx_template_name_assetgrp }}"
+    state: present
+    unified_job_template: "WSAA {{ awx_template_name_assetgrp }}"
+    rrule: "{{ query(awx.awx.schedule_rruleset, '2024-07-31 06:30:45', rules=rrules, timezone='UTC' ) }}"
+  vars:
+    rrules:
+      - frequency: 'day'
+        every: 1
+        on_days: 'saturday'
+
+- name: Create schedule for first of every month
+  awx.awx.schedule:
+    name: "WSAA {{ awx_template_name_reports }}"
+    state: present
+    unified_job_template: "WSAA {{ awx_template_name_reports }}"
+    rrule: "DTSTART:20240801T130551Z RRULE:FREQ=MONTHLY;INTERVAL=1;COUNT=1"

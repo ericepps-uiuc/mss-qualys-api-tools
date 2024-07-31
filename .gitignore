@@ -1,0 +1,6 @@
+**/*.pbix
+**/-archived
+**/.DS_Store
+**/.pbi/localSettings.json
+**/.pbi/cache.abf
+*.log
