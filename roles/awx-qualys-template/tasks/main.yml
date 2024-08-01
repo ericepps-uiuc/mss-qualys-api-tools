@@ -1,2 +1,51 @@
-- include_tasks: awx.yml
+- name: Create Qualys asset group template
+  awx.awx.job_template:
+    controller_host: "{{ awxhost }}"
+    controller_oauthtoken: "{{ awxtoken }}"
+    organization: "{{ awxorg }}"
+    project: "WSAA {{ awx_project_name }}"
+    description: "{{ awxdesc }}"
+    name: "WSAA {{ awx_template_name_assetgrp }}"
+    job_type: run
+    inventory: WSAA Inventory Ad Hoc
+    playbook: qualys_asset_groups.yml
+    ask_instance_groups_on_launch: false
+    allow_simultaneous: false
+    credentials: "{{ awx_template_creds }}"
+    survey_enabled: false
 
+- name: Create Qualys report template
+  awx.awx.job_template:
+    controller_host: "{{ awxhost }}"
+    controller_oauthtoken: "{{ awxtoken }}"
+    organization: "{{ awxorg }}"
+    project: "WSAA {{ awx_project_name }}"
+    description: "{{ awxdesc }}"
+    name: "WSAA {{ awx_template_name_reports }}"
+    job_type: run
+    inventory: WSAA Inventory Ad Hoc
+    playbook: qualys_reports.yml
+    ask_instance_groups_on_launch: false
+    allow_simultaneous: false
+    credentials: "{{ awx_template_creds }}"
+    survey_enabled: false
+
+- name: Create schedule for every Saturday morning
+  awx.awx.schedule:
+    controller_host: "{{ awxhost }}"
+    controller_oauthtoken: "{{ awxtoken }}"
+    organization: "{{ awxorg }}"
+    name: "WSAA {{ awx_template_name_assetgrp }}"
+    state: present
+    unified_job_template: "WSAA {{ awx_template_name_assetgrp }}"
+    rrule: "DTSTART:20240801T110500Z RRULE:FREQ=WEEKLY;INTERVAL=1;BYDAY=SA"
+
+- name: Create schedule for first of every month
+  awx.awx.schedule:
+    controller_host: "{{ awxhost }}"
+    controller_oauthtoken: "{{ awxtoken }}"
+    organization: "{{ awxorg }}"
+    name: "WSAA {{ awx_template_name_reports }}"
+    state: present
+    unified_job_template: "WSAA {{ awx_template_name_reports }}"
+    rrule: "DTSTART:20240801T110500Z RRULE:FREQ=MONTHLY;INTERVAL=1"
