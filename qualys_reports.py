@@ -6,12 +6,10 @@ import jmespath
 from requests.auth import HTTPBasicAuth
 import xml.etree.ElementTree as ET
 from box_sdk_gen import (
-    UploadFileAttributes,
-   	UploadFileAttributesParentField,
-    Files,
-   	File,
+	BoxClient, BoxDeveloperTokenAuth,
+    UploadFileAttributes, UploadFileAttributesParentField,
+    Files, File,
 )
-from box_sdk_gen import BoxClient, BoxDeveloperTokenAuth
 
 #get qualys credentials from vault
 vault_url = 'https://smg-vault.techservices.illinois.edu:8200/v1/wsaa/apiaccess/qualys'
@@ -52,7 +50,6 @@ def qualys_call(qualys_endpoint, qualys_action):
 	print(qualys_url)
 	qualys_response = requests.post(url=qualys_url, headers=qualys_headers, auth=qualys_auth)
 	print(qualys_response)
-	
 	return qualys_response
 
 # get list of asset groups from Qualys
@@ -71,14 +68,15 @@ for elem in qualys_reponse_xml.findall('.//REPORT'):
 			report_time = report_datetime[0].replace('-','')
 		if(child.tag == 'OUTPUT_FORMAT'): report_format = child.text
 
-	#fetch and save report to working directory
+	# fetch and save report to working directory
 	qualys_report_action = '?action=fetch&id=' + report_id
 	qualys_report_response = qualys_call(qualys_endpoint, qualys_report_action)
-	
+
 	report_file_name = report_title + '_' + report_time + '.' + report_format
 	with open(report_file_name, "wb") as report:
 		report.write(qualys_report_response.content)
 
+	# upload to Box folder
 	attrs = UploadFileAttributes(
     	name=report_file_name, parent=UploadFileAttributesParentField(id="277885701226")
 	)
