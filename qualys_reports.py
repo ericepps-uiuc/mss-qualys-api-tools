@@ -6,7 +6,7 @@ import jmespath
 from requests.auth import HTTPBasicAuth
 import xml.etree.ElementTree as ET
 from box_sdk_gen import (
-	BoxClient, BoxDeveloperTokenAuth,
+	BoxClient, BoxCCGAuth, CCGConfig,
     UploadFileAttributes, UploadFileAttributesParentField,
     Files, File,
 )
@@ -30,11 +30,17 @@ headers = {'X-Vault-Token': vault_token}
 vault_response = requests.get(vault_url, headers=headers)
 vault_response_json = vault_response.json()
 
-box_token = json.dumps(vault_response_json["data"]["dev-token"]).strip('\"')
-#box_id = json.dumps(vault_response_json["data"]["client-id"]).strip('\"')
-#box_secret = json.dumps(vault_response_json["data"]["client-secret"]).strip('\"')
+box_client_id = json.dumps(vault_response_json["data"]["client-id"]).strip('\"')
+box_client_secret = json.dumps(vault_response_json["data"]["client-secret"]).strip('\"')
+box_enterprise_id = '83165'
 
-auth: BoxDeveloperTokenAuth = BoxDeveloperTokenAuth(token=box_token)
+ccg = CCGConfig(
+    client_id=box_client_id,
+    client_secret=box_client_secret,
+    enterprise_id=box_enterprise_id,
+)
+auth = BoxCCGAuth(ccg)
+
 client: BoxClient = BoxClient(auth=auth)
 
 def qualys_call(qualys_endpoint, qualys_action):
