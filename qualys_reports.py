@@ -6,9 +6,9 @@ import jmespath
 from requests.auth import HTTPBasicAuth
 import xml.etree.ElementTree as ET
 from box_sdk_gen import (
-	BoxClient, BoxCCGAuth, CCGConfig,
-    UploadFileAttributes, UploadFileAttributesParentField,
-    Files, File,
+	BoxClient, BoxCCGAuth, CCGConfig, BoxAPIError,
+	UploadFileAttributes, UploadFileAttributesParentField, PreflightFileUploadCheckParent,
+	Files, File,
 )
 
 #get qualys credentials from vault
@@ -40,7 +40,6 @@ ccg = CCGConfig(
     enterprise_id=box_enterprise_id,
 )
 auth = BoxCCGAuth(ccg)
-
 client: BoxClient = BoxClient(auth=auth)
 
 def qualys_call(qualys_endpoint, qualys_action):
@@ -83,13 +82,25 @@ for elem in qualys_reponse_xml.findall('.//REPORT'):
 		report.write(qualys_report_response.content)
 
 	# upload to Box folder
-	attrs = UploadFileAttributes(
-    	name=report_file_name, parent=UploadFileAttributesParentField(id="277885701226")
-	)
-	files: Files = client.uploads.upload_file(
-    	attributes=attrs, file=open(report_file_name, "rb")
-	)
-	file: File = files.entries[0]
+	box_folder_id = '277885701226'
+	file_path = report_file_name
+	file_size = os.path.getsize(file_path)
+	file_name = os.path.basename(file_path)
+	file_id = None
+	try:
+		pre_flight_arg = PreflightFileUploadCheckParent(id=box_folder_id)
+		client.uploads.preflight_file_upload_check(name=file_name, size=file_size, parent=pre_flight_arg)
+	except BoxAPIError as err:
+		if err.response_info.body.get("code", None) == "item_name_in_use":
+			file_id = err.response_info.body["context_info"]["conflicts"]["id"]
+		else:
+			raise err
+	upload_arg = UploadFileAttributes(file_name, UploadFileAttributesParentField(box_folder_id))
+	if file_id is None:
+		# upload new file
+		files: Files = client.uploads.upload_file(upload_arg, file=open(file_path, "rb"))
+	else:
+		# upload new version
+		files: Files = client.uploads.upload_file_version(file_id, upload_arg, file=open(file_path, "rb"))
+	file = files.entries[0]
 	print(f"File uploaded with id {file.id}, name {file.name}")
-
-
