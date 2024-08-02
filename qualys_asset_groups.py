@@ -4,40 +4,13 @@ import os
 import json
 import jmespath
 from requests.auth import HTTPBasicAuth
+from _shared.functions import vault_call, qualys_call
 
-vault_url = 'https://smg-vault.techservices.illinois.edu:8200/v1/wsaa/apiaccess/qualys'
-vault_token = os.environ["VAULT_TOKEN"]
-headers = {'X-Vault-Token': vault_token}
-
-vault_response = requests.get(vault_url, headers=headers)
-vault_response_json = vault_response.json()
-
+vault_response_json = vault_call('wsaa/apiaccess/qualys')
 qualys_un = json.dumps(vault_response_json["data"]["user"]).strip('\"')
 qualys_pw = json.dumps(vault_response_json["data"]["password"]).strip('\"')
 
-def qualys_call(qualys_endpoint, qualys_action):
-	global qualys_un
-	global qualys_pw
-	qualys_auth = HTTPBasicAuth(qualys_un, qualys_pw)
-
-	qualys_base_url = 'https://qualysapi.qualys.com'
-	qualys_headers = {
-	    'X-Requested-With': 'qualys_asset_groups.py',
-	}
-	qualys_url = qualys_base_url + qualys_endpoint + '' + qualys_action
-	print(qualys_url)
-	qualys_response = requests.post(url=qualys_url, headers=qualys_headers, auth=qualys_auth)
-	print(qualys_response)
-	
-	return qualys_response
-
-vault_url = 'https://smg-vault.techservices.illinois.edu:8200/v1/wsaa/apiaccess/lansweeper'
-vault_token = os.environ["VAULT_TOKEN"]
-headers = {'X-Vault-Token': vault_token}
-
-vault_response = requests.get(vault_url, headers=headers)
-vault_response_json = vault_response.json()
-
+vault_response_json = vault_call('wsaa/apiaccess/lansweeper')
 lansweeper_api_token = json.dumps(vault_response_json["data"]["lansweeper_api_token"]).strip('\"')
 lansweeper_site_id = json.dumps(vault_response_json["data"]["lansweeper_site_id"]).strip('\"')
 lansweeper_url = 'https://api.lansweeper.com/api/v2/graphql'
@@ -114,13 +87,10 @@ for asset_group in uniq_asset_groups:
 
 ansible_inv = ansible_inv_groups
 
-#------------------------------------
-# Begin Qualys
-
 # get list of asset groups from Qualys
 qualys_endpoint = '/api/2.0/fo/asset/group/'
 qualys_action = '?action=list&output_format=csv&show_attributes=ID,TITLE,IP_SET'
-qualys_response = qualys_call(qualys_endpoint, qualys_action)
+qualys_response = qualys_call(qualys_un, qualys_pw, qualys_endpoint, qualys_action)
 
 qualys_response_csv = qualys_response.content.splitlines()
 qualys_response_row = list(qualys_response_csv)
@@ -153,10 +123,10 @@ for asset_group in uniq_asset_groups:
 	else:
 		qualys_action = '?action=add&ips=' + ip_addresses + '&title=' + asset_group + '_IP'
 
-	qualys_call(qualys_endpoint, qualys_action)
+	qualys_call(qualys_un, qualys_pw, qualys_endpoint, qualys_action)
 
 # update all asset group
 print('WSAA_ALL')
 qualys_action = '?action=edit&set_ips=' + ip_addresses_all + '&id=10320182'
-qualys_call(qualys_endpoint, qualys_action)
+qualys_call(qualys_un, qualys_pw, qualys_endpoint, qualys_action)
 
