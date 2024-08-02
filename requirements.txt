@@ -1,3 +1,5 @@
 requests
 jmespath
 box-sdk-gen
+azure-cosmos
+csv

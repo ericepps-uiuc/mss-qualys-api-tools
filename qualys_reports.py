@@ -2,6 +2,7 @@
 import requests
 import os
 import json
+import csv
 import jmespath
 from requests.auth import HTTPBasicAuth
 import xml.etree.ElementTree as ET
@@ -78,6 +79,47 @@ for elem in qualys_reponse_xml.findall('.//REPORT'):
 		files: Files = client.uploads.upload_file_version(file_id, upload_arg, file=open(file_path, "rb"))
 	file = files.entries[0]
 	print(f"File uploaded with id {file.id}, name {file.name}")
-	
+
+	# upload full CSV report to Cosmos DB
+	if(report_title == 'WSAA_ALL_REP' and report_format == 'CSV'):
+		# delete header lines
+		with open(report_file_name, 'r') as fin:
+			headers_orig = '"IP","DNS","NetBIOS","Tracking Method","OS","IP Status","QID","Title","Vuln Status","Type","Severity","Port","Protocol","FQDN","SSL","First Detected","Last Detected","Times Detected","Date Last Fixed","CVE ID","Vendor Reference","Bugtraq ID","CVSS","CVSS Base","CVSS Temporal","CVSS Environment","CVSS3.1","CVSS3.1 Base","CVSS3.1 Temporal","Threat","Impact","Solution","Exploitability","Associated Malware","Results","PCI Vuln","Ticket State","Instance","Category"'
+			headers_new = headers_orig.lower().replace(' ','_').replace('"netbios"','"server"')
+			data = fin.read().replace(headers_orig,headers_new).splitlines(True)
+		with open(report_file_name, 'w') as fout:
+			fout.writelines(data[10:])
+
+		#get cosmos key from vault
+		vault_response_json = vault_call('wsaa/apiaccess/cosmosdb')
+		cosmos_key = json.dumps(vault_response_json["data"]["key"]).strip('\"')
+
+		#connect to Cosmos DB
+		from azure.cosmos import CosmosClient, PartitionKey, exceptions
+		cosmos_url = 'https://mss-cosmos-customermanagement-account.documents.azure.com:443/'
+		cosmos_client = CosmosClient(cosmos_url, credential=cosmos_key)
+		database_name = 'mss-cosmos-customermanagement-db1'
+		container_name = 'mss-qualys'
+		database = cosmos_client.get_database_client(database_name)
+		container_client = database.get_container_client(container_name)
+		
+		# ingest CSV file into JSON
+		iter = 0
+		data_dict = {}
+		with open(report_file_name, encoding = 'utf-8') as csv_file_handler:
+			csv_reader = csv.DictReader(csv_file_handler)
+			for rows in csv_reader:
+				iter += 1
+				data_dict[iter] = rows
+
+		# loop through JSON, insert to Cosmos DB
+		iter = 0
+		for key, subdict in data_dict.items():
+			iter += 1
+			subdict['id'] = report_file_name[13:19] + format(iter, '04')
+			subdict['month'] = report_file_name[13:17] + '-' + report_file_name[17:19]
+			container_client.upsert_item(subdict)
+		print(str(iter) + ' Records inserted to ' + container_name)
+
 	#delete file
 	os.remove(report_file_name)
