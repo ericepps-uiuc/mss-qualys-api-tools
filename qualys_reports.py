@@ -57,12 +57,12 @@ def qualys_call(qualys_endpoint, qualys_action):
 	print(qualys_response)
 	return qualys_response
 
-# get list of asset groups from Qualys
+# get list of finished reports from Qualys
 qualys_endpoint = '/api/2.0/fo/report/'
 qualys_action = '?action=list&state=Finished'
 qualys_response = qualys_call(qualys_endpoint, qualys_action)
 
-# parse xml response
+# loop through reports
 qualys_reponse_xml = ET.fromstring(qualys_response.text)
 for elem in qualys_reponse_xml.findall('.//REPORT'):
 	for child in elem:
@@ -104,3 +104,6 @@ for elem in qualys_reponse_xml.findall('.//REPORT'):
 		files: Files = client.uploads.upload_file_version(file_id, upload_arg, file=open(file_path, "rb"))
 	file = files.entries[0]
 	print(f"File uploaded with id {file.id}, name {file.name}")
+	
+	#delete file
+	os.remove(report_file_name)
